@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Campus Helper</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --text: #172033;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --green: #15803d;
+      --red: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 250px minmax(0, 1fr); }
+    .sidebar {
+      background: #0f172a;
+      color: white;
+      padding: 26px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; padding: 0 8px 28px; }
+    .brand-icon {
+      width: 44px; height: 44px; display: grid; place-items: center;
+      border-radius: 14px; background: #2563eb; font-size: 23px;
+    }
+    .brand h1 { font-size: 17px; margin: 0 0 4px; }
+    .brand p { margin: 0; color: #cbd5e1; font-size: 12px; }
+    .nav { display: grid; gap: 8px; }
+    .nav button {
+      width: 100%; text-align: left; border: 0; color: #cbd5e1;
+      background: transparent; padding: 13px 14px; border-radius: 10px;
+    }
+    .nav button:hover, .nav button.active { background: #1e293b; color: white; }
+    .sidebar-note {
+      position: absolute; left: 22px; right: 22px; bottom: 24px;
+      color: #94a3b8; font-size: 12px; line-height: 1.5;
+    }
+    main { padding: 28px; min-width: 0; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
+    .eyebrow { color: var(--primary); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+    .topbar h2 { margin: 6px 0 0; font-size: clamp(24px, 3vw, 32px); }
+    .today { color: var(--muted); font-size: 13px; }
+    .hero {
+      border-radius: 20px; padding: 28px; color: white;
+      background: linear-gradient(120deg, #1d4ed8, #4338ca);
+      display: flex; justify-content: space-between; align-items: center; gap: 20px;
+      margin-bottom: 22px;
+    }
+    .hero h3 { margin: 0 0 10px; font-size: clamp(22px, 3vw, 30px); }
+    .hero p { margin: 0; color: #dbeafe; max-width: 560px; line-height: 1.6; }
+    .hero-mark { font-size: 64px; flex-shrink: 0; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 22px; }
+    .stat, .panel, .notice-card, .report-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: 0 4px 14px rgba(15, 23, 42, .04);
+    }
+    .stat { padding: 20px; }
+    .stat .label { color: var(--muted); font-size: 13px; }
+    .stat .number { font-size: 30px; font-weight: 700; margin-top: 9px; }
+    .panel { padding: 22px; margin-bottom: 18px; }
+    .panel h3 { margin: 0 0 14px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .muted { color: var(--muted); }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .notice-list, .report-list { display: grid; gap: 12px; }
+    .notice-card, .report-card { padding: 16px; box-shadow: none; }
+    .notice-card h4, .report-card h4 { margin: 0 0 8px; overflow-wrap: anywhere; }
+    .notice-card p, .report-card p { margin: 0 0 10px; line-height: 1.5; overflow-wrap: anywhere; }
+    .meta { font-size: 12px; color: var(--muted); }
+    .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 5px 8px; border-radius: 999px; background: #dbeafe; color: #1d4ed8; margin-bottom: 9px; }
+    .badge.found { background: #dcfce7; color: #166534; }
+    .badge.lost { background: #fee2e2; color: #991b1b; }
+    .field { margin: 12px 0; }
+    .field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 7px; }
+    input, textarea, select {
+      width: 100%; border: 1px solid #cbd5e1; background: white; color: var(--text);
+      border-radius: 9px; padding: 12px 13px; outline: none;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px #dbeafe; }
+    textarea { min-height: 100px; resize: vertical; }
+    .btn {
+      display: inline-flex; justify-content: center; align-items: center; gap: 7px;
+      border: 0; border-radius: 9px; padding: 11px 15px; font-weight: 700;
+      background: var(--primary); color: white;
+    }
+    .btn:hover { background: var(--primary-dark); }
+    .btn.secondary { background: #e2e8f0; color: #334155; }
+    .btn.secondary:hover { background: #cbd5e1; }
+    .btn.danger { background: #fee2e2; color: #b91c1c; }
+    .btn.danger:hover { background: #fecaca; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .empty { color: var(--muted); padding: 16px; border: 1px dashed #cbd5e1; border-radius: 10px; text-align: center; }
+    .search { max-width: 430px; }
+    footer { padding: 22px 0 8px; text-align: center; color: var(--muted); font-size: 12px; }
+    .small-note { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 210px minmax(0, 1fr); }
+      main { padding: 20px; }
+      .stats { gap: 10px; }
+      .stat { padding: 15px; }
+    }
+    @media (max-width: 680px) {
+      .app { display: block; }
+      .sidebar { position: static; height: auto; padding: 16px; }
+      .brand { padding-bottom: 15px; }
+      .nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .nav button { padding: 11px; font-size: 13px; }
+      .sidebar-note { display: none; }
+      main { padding: 16px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .hero { padding: 22px; }
+      .hero-mark { font-size: 44px; }
+      .stats, .grid-2 { grid-template-columns: 1fr; }
+      .panel { padding: 16px; }
+    }
+    @media print {
+      .sidebar, .actions, .btn, form, .search, .sidebar-note { display: none !important; }
+      .app { display: block; }
+      main { padding: 0; }
+      .section { display: block !important; break-inside: avoid; }
+      body { background: white; }
+      .panel, .stat, .notice-card, .report-card { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">🎓</div>
+        <div>
+          <h1>Smart Campus</h1>
+          <p>Student Helper Portal</p>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active" data-page="dashboard">🏠 Dashboard</button>
+        <button data-page="notices">📢 Notices</button>
+        <button data-page="timetable">🗓️ Timetable</button>
+        <button data-page="lostfound">🔎 Lost &amp; Found</button>
+      </nav>
+      <div class="sidebar-note">A simple campus companion for students.<br>Demo project · No database required.</div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">Student Portal</div>
+          <h2 id="pageTitle">Dashboard</h2>
+        </div>
+        <div class="today" id="todayText"></div>
+      </header>
+
+      <section class="section active" id="dashboard">
+        <div class="hero">
+          <div>
+            <h3>Welcome to Smart Campus Helper 👋</h3>
+            <p>Find campus notices, check your timetable, and report lost or found items—all in one simple place.</p>
+          </div>
+          <div class="hero-mark">🎓</div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="label">Saved Notices</div><div class="number" id="noticeCount">0</div></div>
+          <div class="stat"><div class="label">Lost &amp; Found Reports</div><div class="number" id="itemCount">0</div></div>
+          <div class="stat"><div class="label">Students</div><div class="number" id="studentCount">—</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head"><h3>Latest Notices</h3><button class="btn secondary" data-go="notices">View all</button></div>
+            <div id="latestNotices" class="notice-list"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Quick Links</h3></div>
+            <div class="actions">
+              <button class="btn" data-go="notices">View Notices</button>
+              <button class="btn" data-go="timetable">Open Timetable</button>
+              <button class="btn" data-go="lostfound">Report an Item</button>
+            </div>
+            <p class="small-note">Tip: use the menu to switch between sections.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="notices">
+        <div class="panel">
+          <h3>Add a Notice</h3>
+          <form id="noticeForm">
+            <div class="field"><label for="noticeTitle">Notice title</label><input id="noticeTitle" maxlength="100" required placeholder="e.g. Exam Schedule"></div>
+            <div class="field"><label for="noticeMessage">Notice details</label><textarea id="noticeMessage" maxlength="1000" required placeholder="Write notice details..."></textarea></div>
+            <button class="btn" type="submit">＋ Add Notice</button>
+          </form>
+          <p class="small-note">Notices are saved only in this browser on this device.</p>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>All Notices</h3>
+            <input class="search" id="noticeSearch" type="search" placeholder="Search notices..." aria-label="Search notices">
+          </div>
+          <div id="noticesList" class="notice-list"></div>
+        </div>
+      </section>
+
+      <section class="section" id="timetable">
+        <div class="panel">
+          <h3>Sample Weekly Timetable</h3>
+          <p class="muted">Replace these demo subjects and times with your real college timetable.</p>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;min-width:520px">
+              <thead><tr style="text-align:left;background:#eff6ff">
+                <th style="padding:12px;border-bottom:1px solid #e2e8f0">Day</th>
+                <th style="padding:12px;border-bottom:1px solid #e2e8f0">9:00–10:00</th>
+                <th style="padding:12px;border-bottom:1px solid #e2e8f0">10:00–11:00</th>
+                <th style="padding:12px;border-bottom:1px solid #e2e8f0">11:30–12:30</th>
+              </tr></thead>
+              <tbody>
+                <tr><td style="padding:12px;border-bottom:1px solid #e2e8f0">Monday</td><td style="padding:12px;border-bottom:1px solid #e2e8f0">DBMS</td><td style="padding:12px;border-bottom:1px solid #e2e8f0">JavaScript</td><td style="padding:12px;border-bottom:1px solid #e2e8f0">AI / ML</td></tr>
+                <tr><td style="padding:12px;border-bottom:1px solid #e2e8f0">Tuesday</td><td style="padding:12px;border-bottom:1px solid #e2e8f0">Operating Systems</td><td style="padding:12px;border-bottom:1px solid #e2e8f0">Data Structures</td><td style="padding:12px;border-bottom:1px solid #e2e8f0">Lab</td></tr>
+                <tr><td style="padding:12px;border-bottom:1px solid #e2e8f0">Wednesday</td><td style="padding:12px;border-bottom:1px solid #e2e8f0">Computer Networks</td><td style="padding:12px;border-bottom:1px solid #e2e8f0">DBMS</td><td style="padding:12px;border-bottom:1px solid #e2e8f0">Lab</td></tr>
+                <tr><td style="padding:12px;border-bottom:1px solid #e2e8f0">Thursday</td><td style="padding:12px;border-bottom:1px solid #e2e8f0">AI / ML</td><td style="padding:12px;border-bottom:1px solid #e2e8f0">Operating Systems</td><td style="padding:12px;border-bottom:1px solid #e2e8f0">Library</td></tr>
+                <tr><td style="padding:12px">Friday</td><td style="padding:12px">Data Structures</td><td style="padding:12px">Computer Networks</td><td style="padding:12px">Project Work</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="lostfound">
+        <div class="panel">
+          <h3>Report a Lost or Found Item</h3>
+          <form id="itemForm">
+            <div class="field"><label for="itemType">Report type</label><select id="itemType" required><option value="Lost">Lost</option><option value="Found">Found</option></select></div>
+            <div class="field"><label for="itemInput">Item details</label><input id="itemInput" maxlength="200" required placeholder="e.g. Blue water bottle near library"></div>
+            <button class="btn" type="submit">＋ Add Report</button>
+          </form>
+          <p class="small-note">Avoid entering phone numbers or other private information in this demo.</p>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Lost &amp; Found Reports</h3><span class="muted" id="reportSummary"></span></div>
+          <div id="itemsList" class="report-list"></div>
+        </div>
+      </section>
+
+      <footer>Smart Campus Helper · Student project demo · Data stays in this browser</footer>
+    </main>
+  </div>
+
+  <script>
+    "use strict";
+
+    const STORAGE_KEYS = {
+      notices: "smartCampusNotices_v1",
+      items: "smartCampusItems_v1"
+    };
+
+    function loadData(key, fallback = []) {
+      try {
+        const saved = localStorage.getItem(key);
+        return saved ? JSON.parse(saved) : fallback;
+      } catch (error) {
+        console.error("Could not read saved data:", error);
+        return fallback;
+      }
+    }
+
+    function saveData(key, data) {
+      try {
+        localStorage.setItem(key, JSON.stringify(data));
+        return true;
+      } catch (error) {
+        alert("Data could not be saved. Your browser storage may be full or disabled.");
+        return false;
+      }
+    }
+
+    let notices = loadData(STORAGE_KEYS.notices, []);
+    let items = loadData(STORAGE_KEYS.items, []);
+
+    // Seed a few demo notices only when no saved notices exist.
+    if (notices.length === 0 && !localStorage.getItem(STORAGE_KEYS.notices)) {
+      notices = [
+        { id: makeId(), title: "Welcome to Smart Campus Helper", message: "Use this portal to view campus updates and report lost or found items.", date: new Date().toISOString() },
+        { id: makeId(), title: "Exam Schedule Reminder", message: "Please check the official college notice board for confirmed exam dates.", date: new Date().toISOString() },
+        { id: makeId(), title: "Library Notice", message: "Remember to return borrowed books by their due date.", date: new Date().toISOString() }
+      ];
+      saveData(STORAGE_KEYS.notices, notices);
+    }
+
+    function makeId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[char]));
+    }
+
+    function formatDate(value) {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? "" : date.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+    }
+
+    function showPage(pageName) {
+      document.querySelectorAll(".section").forEach(section => {
+        section.classList.toggle("active", section.id === pageName);
+      });
+      document.querySelectorAll("[data-page]").forEach(button => {
+        button.classList.toggle("active", button.dataset.page === pageName);
+      });
+      const titles = { dashboard: "Dashboard", notices: "Notices", timetable: "Timetable", lostfound: "Lost & Found" };
+      document.getElementById("pageTitle").textContent = titles[pageName] || "Dashboard";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function updateDashboard() {
+      document.getElementById("noticeCount").textContent = notices.length;
+      document.getElementById("itemCount").textContent = items.length;
+      document.getElementById("studentCount").textContent = "—";
+      const latest = document.getElementById("latestNotices");
+      const recent = [...notices].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3);
+      latest.innerHTML = recent.length ? recent.map(notice => `
+        <article class="notice-card">
+          <h4>${escapeHTML(notice.title)}</h4>
+          <p>${escapeHTML(notice.message)}</p>
+          <div class="meta">${escapeHTML(formatDate(notice.date))}</div>
+        </article>`).join("") : '<div class="empty">No notices yet. Add one in the Notices section.</div>';
+      document.getElementById("reportSummary").textContent = items.length + (items.length === 1 ? " report" : " reports");
+    }
+
+    function renderNotices() {
+      const query = document.getElementById("noticeSearch").value.trim().toLowerCase();
+      const filtered = [...notices]
+        .filter(notice => (notice.title + " " + notice.message).toLowerCase().includes(query))
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+      const list = document.getElementById("noticesList");
+      list.innerHTML = filtered.length ? filtered.map(notice => `
+        <article class="notice-card">
+          <span class="badge">NOTICE</span>
+          <h4>${escapeHTML(notice.title)}</h4>
+          <p>${escapeHTML(notice.message)}</p>
+          <div class="meta">${escapeHTML(formatDate(notice.date))}</div>
+          <div class="actions">
+            <button class="btn secondary" data-edit-notice="${escapeHTML(notice.id)}">Edit</button>
+            <button class="btn danger" data-delete-notice="${escapeHTML(notice.id)}">Delete</button>
+          </div>
+        </article>`).join("") : '<div class="empty">No notices found.</div>';
+    }
+
+    function renderItems() {
+      const list = document.getElementById("itemsList");
+      list.innerHTML = items.length ? [...items].sort((a, b) => new Date(b.date) - new Date(a.date)).map(item => `
+        <article class="report-card">
+          <span class="badge ${item.type === "Found" ? "found" : "lost"}">${escapeHTML(item.type)}</span>
+          <h4>${escapeHTML(item.name)}</h4>
+          <div class="meta">${escapeHTML(formatDate(item.date))}</div>
+          <div class="actions">
+            <button class="btn secondary" data-edit-item="${escapeHTML(item.id)}">Edit</button>
+            <button class="btn danger" data-delete-item="${escapeHTML(item.id)}">Delete</button>
+          </div>
+        </article>`).join("") : '<div class="empty">No reports yet. Add a lost or found item above.</div>';
+    }
+
+    function refreshUI() {
+      updateDashboard();
+      renderNotices();
+      renderItems();
+    }
+
+    document.querySelectorAll("[data-page]").forEach(button => {
+      button.addEventListener("click", () => showPage(button.dataset.page));
+    });
+    document.querySelectorAll("[data-go]").forEach(button => {
+      button.addEventListener("click", () => showPage(button.dataset.go));
+    });
+
+    document.getElementById("noticeForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const title = document.getElementById("noticeTitle").value.trim();
+      const message = document.getElementById("noticeMessage").value.trim();
+      if (!title || !message) return;
+      const next = [{ id: makeId(), title, message, date: new Date().toISOString() }, ...notices];
+      if (saveData(STORAGE_KEYS.notices, next)) {
+        notices = next;
+        event.target.reset();
+        refreshUI();
+      }
+    });
+
+    document.getElementById("noticeSearch").addEventListener("input", renderNotices);
+
+    document.getElementById("noticesList").addEventListener("click", event => {
+      const editButton = event.target.closest("[data-edit-notice]");
+      const deleteButton = event.target.closest("[data-delete-notice]");
+      if (editButton) {
+        const notice = notices.find(entry => entry.id === editButton.dataset.editNotice);
+        if (!notice) return;
+        const title = prompt("Edit notice title:", notice.title);
+        if (title === null) return;
+        const message = prompt("Edit notice details:", notice.message);
+        if (message === null) return;
+        if (!title.trim() || !message.trim()) {
+          alert("Title and details cannot be empty.");
+          return;
+        }
+        const next = notices.map(entry => entry.id === notice.id
+          ? { ...entry, title: title.trim(), message: message.trim(), date: new Date().toISOString() }
+          : entry);
+        if (saveData(STORAGE_KEYS.notices, next)) {
+          notices = next;
+          refreshUI();
+        }
+      }
+      if (deleteButton) {
+        const notice = notices.find(entry => entry.id === deleteButton.dataset.deleteNotice);
+        if (!notice || !confirm(`Delete "${notice.title}"?`)) return;
+        const next = notices.filter(entry => entry.id !== notice.id);
+        if (saveData(STORAGE_KEYS.notices, next)) {
+          notices = next;
+          refreshUI();
+        }
+      }
+    });
+
+    document.getElementById("itemForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const type = document.getElementById("itemType").value;
+      const name = document.getElementById("itemInput").value.trim();
+      if (!name) return;
+      const next = [{ id: makeId(), type, name, date: new Date().toISOString() }, ...items];
+      if (saveData(STORAGE_KEYS.items, next)) {
+        items = next;
+        event.target.reset();
+        refreshUI();
+      }
+    });
+
+    document.getElementById("itemsList").addEventListener("click", event => {
+      const editButton = event.target.closest("[data-edit-item]");
+      const deleteButton = event.target.closest("[data-delete-item]");
+      if (editButton) {
+        const item = items.find(entry => entry.id === editButton.dataset.editItem);
+        if (!item) return;
+        const newName = prompt("Update item details:", item.name);
+        if (newName === null || !newName.trim()) return;
+        const next = items.map(entry => entry.id === item.id
+          ? { ...entry, name: newName.trim(), date: new Date().toISOString() }
+          : entry);
+        if (saveData(STORAGE_KEYS.items, next)) {
+          items = next;
+          refreshUI();
+        }
+      }
+      if (deleteButton) {
+        const item = items.find(entry => entry.id === deleteButton.dataset.deleteItem);
+        if (!item || !confirm(`Delete this ${item.type.toLowerCase()} report?`)) return;
+        const next = items.filter(entry => entry.id !== item.id);
+        if (saveData(STORAGE_KEYS.items, next)) {
+          items = next;
+          refreshUI();
+        }
+      }
+    });
+
+    document.getElementById("todayText").textContent =
+      new Date().toLocaleDateString([], { weekday: "long", year: "numeric", month: "short", day: "numeric" });
+
+    refreshUI();
+  </script>
+</body>
+</html>
